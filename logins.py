@@ -19,7 +19,7 @@ class Wallet:
 
     def initiate_db(self):
         try:
-            connect = MySQLdb.connect("localhost", "richie", "army", "wallet")
+            connect = MySQLdb.connect("host", "user", "password", "database")
             print(connect)
             if connect == True:
                 return connect
@@ -30,7 +30,7 @@ class Wallet:
     def search(self):
         print("Enter name of the account")
         inp = input("> ")
-        initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+        initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         try:
             command = "select * from passwords where site = '{}'".format(
@@ -54,7 +54,7 @@ class Wallet:
         self.password_input = getpass(">password :")
         self.retype_password_input = getpass(">retype password :")
         if self.retype_password_input == self.password_input:
-            initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+            initiate = MySQLdb.connect("host", "user", "password", "database")
             cursor = initiate.cursor()
             command = "insert into passwords (user, site, username, password) values(%s,%s,%s,%s)"
             value = (
@@ -78,7 +78,7 @@ class Wallet:
 
     def delete_record(self):
         self.account_input = input(">Account: ")
-        initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+        initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         #check if more than one acc exists for same site
         command = "select * from passwords where site = '{}'".format(self.account_input)
@@ -95,7 +95,7 @@ class Wallet:
         return success + "deleted!!"
 
     def exportDatatoJson(self):
-        initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+        initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         command = "select * from passwords where user = '{}'".format(self.walletUser)
         cursor.execute(command)
@@ -105,7 +105,7 @@ class Wallet:
     def importDatafromJson(self, json_data):
         data = json.loads(json_data)
         
-        initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+        initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         for i in data:
             command = "insert into passwords (user, site, username, password) values (%s,%s,%s,%s)"
@@ -118,7 +118,7 @@ class Wallet:
 
     def developerMode(self):
         print("ENTERING developer MODE")
-        initiate = MySQLdb.connect("localhost", "richie", "army", "wallet")
+        initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         #function = ("delete table", "")
 
@@ -135,11 +135,11 @@ def intro():
     print("Welcome to your digital wallet!\n")
     # print ("---Type 'h' for help---)
 
-    print("[PASSWORD HINT] your doggy!")
+    print("[PASSWORD HINT] <Your Security Question>: ")
     i = 0
     while i < 3:
         login = getpass("[" + str(i + 1) + "/3 attempts]" + " password> ")
-        if login == "sam":
+        if login == "YourWalletPassword":
             print(success + "Entered Wallet!")
             user = input("user's name> ")
             while True:
