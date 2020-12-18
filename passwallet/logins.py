@@ -2,11 +2,9 @@ import sys
 import json
 import MySQLdb
 from getpass import getpass
-
 from terminaltables import AsciiTable
 
-# import cryptography, user and wallet pass
-# developer mode--- check tables in database, schema
+from dbcredentials import HOST, USER, PASS, DATABASE
 
 success = "[SUCCESS] "
 fail = "[FAILURE] "
@@ -16,40 +14,37 @@ error = "[ERROR] "
 class Wallet:
     def __init__(self, user):
         self.walletUser = user.upper()
-
-    def initiate_db(self):
-        try:
-            connect = MySQLdb.connect("host", "user", "password", "database")
-            print(connect)
-            if connect == True:
-                return connect
-        except:
-            print("Can't connect to database")
-            return 0
+        self.db_host = HOST
+        self.db_user = USER
+        self.db_password = PASS
+        self.db_database = DATABASE
 
     def update(self, **kwargs):
         account = kwargs[acc]
         del kwargs[acc]
-        for key,value in kwargs.items():
+        for key, value in kwargs.items():
             if value == "":
                 del kwargs[key]
         if "username" and "pwd" in new_dic.keys():
-            command = "update passwords set username = '{0}', password = '{1}' where site='{acc}'".format(kwargs[username], kwargs[pwd], acc=account)
+            command = "update passwords set username = '{0}', password = '{1}' where site='{acc}'".format(
+                kwargs[username], kwargs[pwd], acc=account
+            )
         else:
             key = kwargs.keys()[0]
-            command = "update passwords set {0} = '{1}' where site = '{acc}'".format(key, kwargs[key], acc=account)
-        initiate = MySQLdb.connect("host", "user", "password", "database")
+            command = "update passwords set {0} = '{1}' where site = '{acc}'".format(
+                key, kwargs[key], acc=account
+            )
+        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
         cursor = initiate.cursor()
         cursor.execute(command)
         initiate.commit()
         initiate.close()
         return success + "updated!"
 
-
     def search(self):
         print("Enter name of the account")
         inp = input("> ")
-        initiate = MySQLdb.connect("host", "user", "password", "database")
+        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
         cursor = initiate.cursor()
         try:
             command = "select * from passwords where site = '{}'".format(
@@ -73,7 +68,7 @@ class Wallet:
         self.password_input = getpass(">password :")
         self.retype_password_input = getpass(">retype password :")
         if self.retype_password_input == self.password_input:
-            initiate = MySQLdb.connect("host", "user", "password", "database")
+            initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
             cursor = initiate.cursor()
             command = "insert into passwords (user, site, username, password) values(%s,%s,%s,%s)"
             value = (
@@ -86,7 +81,6 @@ class Wallet:
             initiate.commit()
             initiate.close()
 
-            #####acc_dic.update({self.account_input: [self.username_input, self.password_input]})
             message = success + "added {}: {} to your wallet".format(
                 self.acc_hold, self.account_input, self.username_input
             )
@@ -97,24 +91,30 @@ class Wallet:
 
     def delete_record(self):
         self.account_input = input(">Account: ")
-        initiate = MySQLdb.connect("host", "user", "password", "database")
+        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
         cursor = initiate.cursor()
-        #check if more than one acc exists for same site
+        # check if more than one acc exists for same site
         command = "select * from passwords where site = '{}'".format(self.account_input)
         cursor.execute(command)
         result = cursor.fetchall()
         if len(result) > 1:
             username = input("enter username for account: ")
-            command = "DELETE FROM passwords WHERE site = '{}' and username = '{}'".format(self.account_input, username)
+            command = (
+                "DELETE FROM passwords WHERE site = '{}' and username = '{}'".format(
+                    self.account_input, username
+                )
+            )
         else:
-            command = "DELETE FROM passwords WHERE site = '{}'".format(self.account_input)
+            command = "DELETE FROM passwords WHERE site = '{}'".format(
+                self.account_input
+            )
         cursor.execute(command)
         initiate.commit()
         initiate.close()
         return success + "deleted!!"
 
     def exportDatatoJson(self):
-        initiate = MySQLdb.connect("host", "user", "password", "database")
+        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
         cursor = initiate.cursor()
         command = "select * from passwords where user = '{}'".format(self.walletUser)
         cursor.execute(command)
@@ -123,23 +123,17 @@ class Wallet:
 
     def importDatafromJson(self, json_data):
         data = json.loads(json_data)
-        
-        initiate = MySQLdb.connect("host", "user", "password", "database")
+
+        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
         cursor = initiate.cursor()
         for i in data:
             command = "insert into passwords (user, site, username, password) values (%s,%s,%s,%s)"
-            values = ( self.walletUser, i, data[i]["username"], data[i]["password"] )
+            values = (self.walletUser, i, data[i]["username"], data[i]["password"])
             cursor.execute(command, values)
-            print (success + "Inserted account for {}".format(i) )
+            print(success + "Inserted account for {}".format(i))
             initiate.commit()
         initiate.close()
         return 1
-
-    def developerMode(self):
-        print("ENTERING developer MODE")
-        initiate = MySQLdb.connect("host", "user", "password", "database")
-        cursor = initiate.cursor()
-        #function = ("delete table", "")
 
 
 def tablify(data):
@@ -152,7 +146,6 @@ def tablify(data):
 
 def intro():
     print("Welcome to your digital wallet!\n")
-    # print ("---Type 'h' for help---)
 
     print("[PASSWORD HINT] <Your Security Question>: ")
     i = 0
@@ -184,11 +177,15 @@ def intro():
                     print(result)
 
                 elif i == "u":
-                    print ("press enter if keep unchanged")
+                    print("press enter if keep unchanged")
                     acc_inp = input("Edit account> ")
                     username_inp = input("Edit username> ")
                     pass_inp = getpass("password>")
-                    print (wallet_instance.update(acc=acc_inp, username=username_inp, pwd=pass_inp))
+                    print(
+                        wallet_instance.update(
+                            acc=acc_inp, username=username_inp, pwd=pass_inp
+                        )
+                    )
 
                 elif i == "d":
                     print(wallet_instance.delete_record())
@@ -197,7 +194,9 @@ def intro():
                     json_data = {}
                     data = wallet_instance.exportDatatoJson()
                     for item in data:
-                        json_data.update( { item[2] : {"username": item[3],"password":item[4] }} )
+                        json_data.update(
+                            {item[2]: {"username": item[3], "password": item[4]}}
+                        )
                     with open("passwords.txt", "w+") as f:
                         f.write(json.dumps(json_data, indent=4, sort_keys=True))
                         f.close()
@@ -206,10 +205,9 @@ def intro():
                     with open("import.txt", "r") as f:
                         data = wallet_instance.importDatafromJson(f.read())
                     if data is True:
-                        print (success + "IMPORTED")
+                        print(success + "IMPORTED")
                     else:
-                        print (error + "No IMPORT")
-                   
+                        print(error + "No IMPORT")
 
                 else:
                     message = error + "Wrong input! Exiting..."
