@@ -36,7 +36,8 @@ class Wallet:
         if "username" and "pwd" in new_dic.keys():
             command = "update passwords set username = '{0}', password = '{1}' where site='{acc}'".format(kwargs[username], kwargs[pwd], acc=account)
         else:
-            command = "update passwords set {0} = '{1}' where site = '{acc}'".format(key for key in kwargs.keys(), kwargs[key for key in kwargs.keys()], acc=account)
+            key = kwargs.keys()[0]
+            command = "update passwords set {0} = '{1}' where site = '{acc}'".format(key, kwargs[key], acc=account)
         initiate = MySQLdb.connect("host", "user", "password", "database")
         cursor = initiate.cursor()
         cursor.execute(command)
