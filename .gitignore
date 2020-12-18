@@ -3,4 +3,5 @@ main.py
 import.txt
 dist/
 build/
-pyWallet_Richie
+passwallet.egg-info/
+
