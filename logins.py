@@ -27,6 +27,24 @@ class Wallet:
             print("Can't connect to database")
             return 0
 
+    def update(self, **kwargs):
+        account = kwargs[acc]
+        del kwargs[acc]
+        for key,value in kwargs.items():
+            if value == "":
+                del kwargs[key]
+        if "username" and "pwd" in new_dic.keys():
+            command = "update passwords set username = '{0}', password = '{1}' where site='{acc}'".format(kwargs[username], kwargs[pwd], acc=account)
+        else:
+            command = "update passwords set {0} = '{1}' where site = '{acc}'".format(key for key in kwargs.keys(), kwargs[key for key in kwargs.keys()], acc=account)
+        initiate = MySQLdb.connect("host", "user", "password", "database")
+        cursor = initiate.cursor()
+        cursor.execute(command)
+        initiate.commit()
+        initiate.close()
+        return success + "updated!"
+
+
     def search(self):
         print("Enter name of the account")
         inp = input("> ")
@@ -142,6 +160,7 @@ def intro():
         if login == "YourWalletPassword":
             print(success + "Entered Wallet!")
             user = input("user's name> ")
+            wallet_instance = Wallet(user)
             while True:
                 print(
                     "*Enter a command to access the features. \
@@ -155,26 +174,26 @@ def intro():
 
                 i = input("> ")
                 if i == "g":
-                    wallet_instance = Wallet(user)
                     data_list = wallet_instance.search()
                     print(tablify(data_list))
 
                 elif i == "c":
-                    wallet_instance = Wallet(user=user)
                     print("Making a new entry!")
                     result = wallet_instance.make_new_entry()
                     print(result)
 
                 elif i == "u":
-                    print("Update an existing entry")
+                    print ("press enter if keep unchanged")
+                    acc_inp = input("Edit account> ")
+                    username_inp = input("Edit username> ")
+                    pass_inp = getpass("password>")
+                    print (wallet_instance.update(acc=acc_inp, username=username_inp, pwd=pass_inp))
 
                 elif i == "d":
-                    wallet_instance = Wallet(user)
                     print(wallet_instance.delete_record())
 
                 elif i == "e":
                     json_data = {}
-                    wallet_instance = Wallet(user)
                     data = wallet_instance.exportDatatoJson()
                     for item in data:
                         json_data.update( { item[2] : {"username": item[3],"password":item[4] }} )
@@ -184,7 +203,6 @@ def intro():
 
                 elif i == "i":
                     with open("import.txt", "r") as f:
-                        wallet_instance = Wallet(user)
                         data = wallet_instance.importDatafromJson(f.read())
                     if data is True:
                         print (success + "IMPORTED")
