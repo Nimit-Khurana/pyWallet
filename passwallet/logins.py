@@ -19,6 +19,24 @@ class Wallet:
         self.db_password = PASS
         self.db_database = DATABASE
 
+    def __execute_db_command(self, db_command, db_value=None, fetchall=False):
+        initiate = MySQLdb.connect(
+            self.db_host, self.db_user, self.db_password, self.db_database
+        )
+        cursor = initiate.cursor()
+        try:
+            cursor.execute(db_command, db_value)
+            initiate.commit()
+            if fetchall == True:
+                fetch_result = cursor.fetchall()
+                initiate.close()
+                return fetch_result
+            else:
+                return success
+        except MySQLdb._exceptions.OperationalError as e:
+            initiate.close()
+            return sys.exit(error + "in command" + str(db_command))
+
     def update(self, **kwargs):
         account = kwargs[acc]
         del kwargs[acc]
@@ -34,32 +52,16 @@ class Wallet:
             command = "update passwords set {0} = '{1}' where site = '{acc}'".format(
                 key, kwargs[key], acc=account
             )
-        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
-        cursor = initiate.cursor()
-        cursor.execute(command)
-        initiate.commit()
-        initiate.close()
+        __execute_db_command(command)
         return success + "updated!"
 
     def search(self):
         print("Enter name of the account")
         inp = input("> ")
-        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
-        cursor = initiate.cursor()
-        try:
-            command = "select * from passwords where site = '{}'".format(
-                str(inp).upper()
-            )
-            cursor.execute(command)
-            myresult = cursor.fetchall()
-            initiate.close()
-            return myresult
-        except MySQLdb._exceptions.OperationalError as e:
-            message = 'Oops! You did not register any "{}" account here.\n'.format(
-                inp.upper()
-            )
-            initiate.close()
-            return sys.exit(message + error + str(e))
+
+        command = "select * from passwords where site = '{}'".format(str(inp).upper())
+        myresult = __execute_db_command(db_command=command, fetchall=True)
+        return myresult
 
     def make_new_entry(self):
         self.acc_hold = self.walletUser
@@ -68,8 +70,7 @@ class Wallet:
         self.password_input = getpass(">password :")
         self.retype_password_input = getpass(">retype password :")
         if self.retype_password_input == self.password_input:
-            initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
-            cursor = initiate.cursor()
+
             command = "insert into passwords (user, site, username, password) values(%s,%s,%s,%s)"
             value = (
                 self.acc_hold.upper(),
@@ -77,9 +78,7 @@ class Wallet:
                 self.username_input,
                 self.password_input,
             )
-            cursor.execute(command, value)
-            initiate.commit()
-            initiate.close()
+            __execute_db_command(db_command=command, db_value=value)
 
             message = success + "added {}: {} to your wallet".format(
                 self.acc_hold, self.account_input, self.username_input
@@ -91,13 +90,11 @@ class Wallet:
 
     def delete_record(self):
         self.account_input = input(">Account: ")
-        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
-        cursor = initiate.cursor()
         # check if more than one acc exists for same site
-        command = "select * from passwords where site = '{}'".format(self.account_input)
-        cursor.execute(command)
-        result = cursor.fetchall()
-        if len(result) > 1:
+        check_command = "select * from passwords where site = '{}'".format(self.account_input)
+        fetch_result = __execute_db_command(db_command=check_command, fetchall=True)
+        
+        if len(fetch_result) > 1:
             username = input("enter username for account: ")
             command = (
                 "DELETE FROM passwords WHERE site = '{}' and username = '{}'".format(
@@ -108,23 +105,20 @@ class Wallet:
             command = "DELETE FROM passwords WHERE site = '{}'".format(
                 self.account_input
             )
-        cursor.execute(command)
-        initiate.commit()
-        initiate.close()
-        return success + "deleted!!"
+        result = __execute_db_command(db_command=command)
+        return result + "deleted!!"
 
     def exportDatatoJson(self):
-        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
-        cursor = initiate.cursor()
         command = "select * from passwords where user = '{}'".format(self.walletUser)
-        cursor.execute(command)
-        myresult = cursor.fetchall()
-        return myresult
+        fetch_result = __execute_db_command(db_command=command, fetchall=True)
+        return fetch_result
 
     def importDatafromJson(self, json_data):
         data = json.loads(json_data)
 
-        initiate = MySQLdb.connect(self.db_host, self.db_user, self.db_password, self.db_database)
+        initiate = MySQLdb.connect(
+            self.db_host, self.db_user, self.db_password, self.db_database
+        )
         cursor = initiate.cursor()
         for i in data:
             command = "insert into passwords (user, site, username, password) values (%s,%s,%s,%s)"
@@ -133,7 +127,7 @@ class Wallet:
             print(success + "Inserted account for {}".format(i))
             initiate.commit()
         initiate.close()
-        return 1
+        return success
 
 
 def tablify(data):
