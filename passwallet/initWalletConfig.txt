@@ -1,0 +1,16 @@
+create a initialising file that automates:
+
+    check mysql and install if !
+    create a database
+    create tables in it
+    access db credentials
+
+    creating a unique key for dencrypt per user
+
+    copy to clipboard
+
+    sent file to gmail
+
+    automate login selenium
+
+    autocomplete https://www.geeksforgeeks.org/how-to-detect-if-a-specific-key-pressed-using-python/

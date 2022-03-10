@@ -4,4 +4,7 @@ import.txt
 dist/
 build/
 passwallet.egg-info/
-
+config.ini
+passwallet/__pycache__/
+tests/
+__pycache__/
